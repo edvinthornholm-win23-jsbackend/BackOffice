@@ -1,0 +1,53 @@
+﻿@page "/users"
+@using BackOffice.Data
+@inject HttpClient Http
+
+<PageTitle>Users</PageTitle>
+
+<h1>Users</h1>
+
+@if (users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @foreach (var user in users)
+    {
+        <div>
+            <p>UserName: @user.UserName</p>
+            <p>Email: @user.Email</p>
+
+            @if (user.UserProfile != null)
+            {
+                <p>First Name: @user.UserProfile.FirstName</p>
+                <p>Last Name: @user.UserProfile.LastName</p>
+            }
+            else
+            {
+                <p>No user profile found.</p>
+            }
+
+            @if (user.UserAddress != null)
+            {
+                <p>Address Line 1: @user.UserAddress.AddressLine_1</p>
+                <p>Address Line 2: @user.UserAddress.AddressLine_2</p>
+                <p>Postal Code: @user.UserAddress.PostalCode</p>
+                <p>City: @user.UserAddress.City</p>
+            }
+            else
+            {
+                <p>No user address found.</p>
+            }
+        </div>
+    }
+}
+
+@code {
+    private ApplicationUser[]? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await Http.GetFromJsonAsync<ApplicationUser[]>("https://userprovider-silicon-et.azurewebsites.net/api/GetUser?code=VFnHjGRlz-2iFHvnzGcvGWPWuX43Ojo3UJuB--w3w-opAzFunzCNEw==");
+    }
+}
