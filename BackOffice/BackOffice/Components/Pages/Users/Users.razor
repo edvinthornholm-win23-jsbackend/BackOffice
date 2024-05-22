@@ -17,11 +17,12 @@
 }
 else
 {
+
     @foreach (var user in users)
     {
         <div>
-            <p>UserName: @user.UserName</p>
-            <p>Email: @user.Email</p>
+            @* <p>UserName: @user.UserName</p> *@
+            <p class="fw-bold">Email: @user.Email</p>
 
             @if (user.UserProfile != null)
             {
@@ -33,6 +34,8 @@ else
                 <p>No user profile found.</p>
             }
 
+            <hr />
+@* 
             @if (user.UserAddress != null)
             {
                 <p>Address Line 1: @user.UserAddress.AddressLine_1</p>
@@ -43,7 +46,7 @@ else
             else
             {
                 <p>No user address found.</p>
-            }
+            } *@
         </div>
     }
 }
