@@ -1,0 +1,105 @@
+﻿@page "/user/update"
+@using BackOffice.Data
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>User</PageTitle>
+
+<h1>User</h1>
+
+<StatusMessage Message="@errorMessage" />
+
+<EditForm Model="Input" OnValidSubmit="GetUser" FormName="getuserform">
+@*     <DataAnnotationsValidator />
+    <hr />
+    <ValidationSummary class="text-danger" role="alert" /> *@
+    <div class="form-floating mb-3">
+        <InputText @bind-Value="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
+        <label for="email" class="form-label">Email</label>
+@*         <ValidationMessage For="() => Input.Email" class="text-danger" /> *@
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</EditForm>
+
+@if (user == null)
+{
+    @if (loading)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (errorMessage != null)
+    {
+        <p><em>@errorMessage</em></p>
+    }
+}
+else
+{
+    <div>
+        <p>UserName: @user.UserName</p>
+        <p>Email: @user.Email</p>
+
+        @if (user.UserProfile != null)
+        {
+            <p>First Name: @user.UserProfile.FirstName</p>
+            <p>Last Name: @user.UserProfile.LastName</p>
+        }
+        else
+        {
+            <p>No user profile found.</p>
+        }
+
+        @if (user.UserAddress != null)
+        {
+            <p>Address Line 1: @user.UserAddress.AddressLine_1</p>
+            <p>Address Line 2: @user.UserAddress.AddressLine_2</p>
+            <p>Postal Code: @user.UserAddress.PostalCode</p>
+            <p>City: @user.UserAddress.City</p>
+        }
+        else
+        {
+            <p>No user address found.</p>
+        }
+    </div>
+}
+
+@code {
+    private ApplicationUser? user;
+    private bool loading = false;
+    private string? errorMessage;
+
+    private UserInput Input { get; set; } = new UserInput();
+
+    public async Task GetUser()
+    {
+        loading = true;
+        errorMessage = null;
+        user = null;
+
+        try
+        {
+            Console.WriteLine(Input.Email);
+            user = await Http.GetFromJsonAsync<ApplicationUser>($"http://localhost:7171/api/GetUserByEmail?email={Input.Email}");
+            
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"User not found or an error occurred: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+
+    private class UserInput
+    {
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
+        public string Email { get; set; } = string.Empty;
+    }
+
+}

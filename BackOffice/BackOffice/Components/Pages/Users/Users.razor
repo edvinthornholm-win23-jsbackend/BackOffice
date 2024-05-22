@@ -2,9 +2,14 @@
 @using BackOffice.Data
 @inject HttpClient Http
 
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
 <PageTitle>Users</PageTitle>
 
 <h1>Users</h1>
+
+<a href="user/update" class="btn btn-primary mb-5">Update User</a>
 
 @if (users == null)
 {
