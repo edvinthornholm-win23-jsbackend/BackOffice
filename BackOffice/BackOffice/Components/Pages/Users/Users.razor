@@ -2,9 +2,14 @@
 @using BackOffice.Data
 @inject HttpClient Http
 
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
 <PageTitle>Users</PageTitle>
 
 <h1>Users</h1>
+
+<a href="user/update" class="btn btn-primary mb-5">Update & DeleteUser</a>
 
 @if (users == null)
 {
@@ -12,22 +17,27 @@
 }
 else
 {
+
     @foreach (var user in users)
     {
         <div>
-            <p>UserName: @user.UserName</p>
-            <p>Email: @user.Email</p>
+            @* <p>UserName: @user.UserName</p> *@
+            <p class="fw-bold">Email: @user.Email</p>
+            <p>Id: @user.Id</p>
 
             @if (user.UserProfile != null)
             {
                 <p>First Name: @user.UserProfile.FirstName</p>
                 <p>Last Name: @user.UserProfile.LastName</p>
+               
             }
             else
             {
                 <p>No user profile found.</p>
             }
 
+            <hr />
+@* 
             @if (user.UserAddress != null)
             {
                 <p>Address Line 1: @user.UserAddress.AddressLine_1</p>
@@ -38,7 +48,7 @@ else
             else
             {
                 <p>No user address found.</p>
-            }
+            } *@
         </div>
     }
 }

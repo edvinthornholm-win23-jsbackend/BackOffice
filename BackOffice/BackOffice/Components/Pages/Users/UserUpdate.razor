@@ -1,0 +1,222 @@
+﻿@page "/user/update"
+@using BackOffice.Data
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>User</PageTitle>
+
+<div class="container">
+    <h1>User</h1>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <div class="alert @(isSuccess ? "alert-success" : "alert-danger")" role="alert">
+            @Message
+        </div>
+    }
+
+    @if (showDeleteConfirmation)
+    {
+        <div class="modal">
+            <div class="modal-content">
+                <p>Vill du verkligen ta bort den här användaren?</p>
+                <button class="btn btn-danger" @onclick="DeleteUser">Ja, ta bort</button>
+                <button class="btn btn-secondary" @onclick="CancelDelete">Avbryt</button>
+            </div>
+        </div>
+    }
+
+
+    <EditForm Model="Input" OnValidSubmit="GetUser" FormName="getuserform">
+        <div class="form-floating mb-3">
+            <InputText @bind-Value="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
+            <label for="email" class="form-label">Email</label>
+        </div>
+        <button type="submit" class="btn btn-primary mb-3">Get User</button>
+    </EditForm>
+
+    @if (user != null)
+    {
+        <EditForm Model="user" OnValidSubmit="UpdateUser" FormName="updateuser">
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.Email" class="form-control" aria-required="true" placeholder="@user.Email" />
+                <label for="email" class="form-label">Email</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.UserProfile.FirstName" class="form-control" aria-required="true" placeholder="@user.UserProfile.FirstName" />
+                <label for="firstName" class="form-label">First Name</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.PhoneNumber" class="form-control" placeholder="Phone Number" />
+                <label for="phoneNumber" class="form-label">Phone Number</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.UserProfile.LastName" class="form-control" aria-required="true" placeholder="@user.UserProfile.LastName" />
+                <label for="lastName" class="form-label">Last Name</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.UserAddress.AddressLine_1" class="form-control" placeholder="@user.UserAddress.AddressLine_1" />
+                <label for="addressLine1" class="form-label">Address Line 1</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.UserAddress.AddressLine_2" class="form-control" placeholder="@user.UserAddress.AddressLine_2" />
+                <label for="addressLine2" class="form-label">Address Line 2</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.UserAddress.PostalCode" class="form-control" placeholder="@user.UserAddress.PostalCode" />
+                <label for="postalCode" class="form-label">Postal Code</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="user.UserAddress.City" class="form-control" placeholder="@user.UserAddress.City" />
+                <label for="city" class="form-label">City</label>
+            </div>
+
+            <button type="submit" class="btn btn-gray mb-3">Update User</button>
+            <button type="button" class="btn btn-danger mb-3" @onclick="DeleteUser">Delete User</button>
+
+        </EditForm>
+        @*
+    <div>
+    <p>UserName: @user.UserName</p>
+    <p>Email: @user.Email</p>
+
+    @if (user.UserProfile != null)
+    {
+    <p>First Name: @user.UserProfile.FirstName</p>
+    <p>Last Name: @user.UserProfile.LastName</p>
+    }
+    else
+    {
+    <p>No user profile found.</p>
+    }
+
+    @if (user.UserAddress != null)
+    {
+    <p>Address Line 1: @user.UserAddress.AddressLine_1</p>
+    <p>Address Line 2: @user.UserAddress.AddressLine_2</p>
+    <p>Postal Code: @user.UserAddress.PostalCode</p>
+    <p>City: @user.UserAddress.City</p>
+    }
+    else
+    {
+    <p>No user address found.</p>
+    }
+    </div> *@
+    }
+    else if (loading)
+    {
+        <p><em>Loading...</em></p>
+    }
+</div>
+
+@code {
+    private ApplicationUser user;
+    private bool loading = false;
+    private string Message;
+    private bool isSuccess;
+    private bool showDeleteConfirmation = false;
+    private string userIdToDelete;
+
+    private UserInput Input { get; set; } = new UserInput();
+
+    public async Task GetUser()
+    {
+        loading = true;
+        Message = null;
+        user = null;
+
+        try
+        {
+            user = await Http.GetFromJsonAsync<ApplicationUser>($"https://userprovider-silicon-et.azurewebsites.net/api/GetUserByEmail?code=IFqZbMytZveCRsyGi46D66XTncAcfCfgjdoCsdukZq22AzFuFsO2kg%3D%3D&email={Input.Email}");
+
+            if (user == null)
+            {
+                Message = "User not found.";
+                isSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"An error occurred: {ex.Message}";
+            isSuccess = false;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    public async Task UpdateUser()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("https://userprovider-silicon-et.azurewebsites.net/api/UpdateUser?code=CRCF64JtlscznPWA5e2XIIy8XjoGJ0X51XBqD2hect9SAzFuJP4W5g%3D%3D", user);
+            response.EnsureSuccessStatusCode();
+            Message = "User updated successfully.";
+            isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            Message = $"An error occurred: {ex.Message}";
+            isSuccess = false;
+        }
+    }
+
+    private class UserInput
+    {
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    private async Task ConfirmDelete(string userId)
+    {
+        userIdToDelete = userId;
+        showDeleteConfirmation = true;
+    }
+
+    private async Task DeleteUser()
+    {
+        try
+        {
+            var userIdObject = new { Id = user.Id };
+            var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Delete,
+                    RequestUri = new Uri("https://userprovider-silicon-et.azurewebsites.net/api/DeleteUser?code=6yirkG9sJg1cs8jFxCScnBLAo1DkhluYlW0CC2S20qMQAzFuQ8Z-Gg%3D%3D"),
+                    Content = JsonContent.Create(userIdObject)
+                };
+
+            var response = await Http.SendAsync(request);
+
+            response.EnsureSuccessStatusCode();
+            Message = "Deleted successfully.";
+            isSuccess = true;
+
+        }
+        catch (Exception ex)
+        {
+            Message = $"An error occurred: {ex.Message}";
+            isSuccess = false;
+        }
+    }
+
+
+
+    private async Task CancelDelete()
+    {
+        showDeleteConfirmation = false;
+        userIdToDelete = null;
+    }
+}
+
