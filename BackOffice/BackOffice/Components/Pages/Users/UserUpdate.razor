@@ -51,10 +51,6 @@
                 <label for="firstName" class="form-label">First Name</label>
             </div>
 
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="user.PhoneNumber" class="form-control" placeholder="Phone Number" />
-                <label for="phoneNumber" class="form-label">Phone Number</label>
-            </div>
 
             <div class="form-floating mb-3">
                 <InputText @bind-Value="user.UserProfile.LastName" class="form-control" aria-required="true" placeholder="@user.UserProfile.LastName" />
@@ -62,16 +58,21 @@
             </div>
 
             <div class="form-floating mb-3">
+                <InputText @bind-Value="user.PhoneNumber" class="form-control" placeholder="Phone Number" />
+                <label for="phoneNumber" class="form-label">Phone Number</label>
+            </div>
+
+@*             <div class="form-floating mb-3">
                 <InputText @bind-Value="user.UserAddress.AddressLine_1" class="form-control" placeholder="@user.UserAddress.AddressLine_1" />
                 <label for="addressLine1" class="form-label">Address Line 1</label>
-            </div>
+            </div> *@
 
-            <div class="form-floating mb-3">
+@*             <div class="form-floating mb-3">
                 <InputText @bind-Value="user.UserAddress.AddressLine_2" class="form-control" placeholder="@user.UserAddress.AddressLine_2" />
                 <label for="addressLine2" class="form-label">Address Line 2</label>
-            </div>
+            </div> *@
 
-            <div class="form-floating mb-3">
+@*             <div class="form-floating mb-3">
                 <InputText @bind-Value="user.UserAddress.PostalCode" class="form-control" placeholder="@user.UserAddress.PostalCode" />
                 <label for="postalCode" class="form-label">Postal Code</label>
             </div>
@@ -79,10 +80,10 @@
             <div class="form-floating mb-3">
                 <InputText @bind-Value="user.UserAddress.City" class="form-control" placeholder="@user.UserAddress.City" />
                 <label for="city" class="form-label">City</label>
-            </div>
+        </div> *@
 
             <button type="submit" class="btn btn-gray mb-3">Update User</button>
-            <button type="button" class="btn btn-danger mb-3" @onclick="DeleteUser">Delete User</button>
+            <button type="button" class="btn btn-danger mb-3" @onclick="DeleteUser">Delete User</button> 
 
         </EditForm>
         @*
@@ -144,6 +145,10 @@
                 Message = "User not found.";
                 isSuccess = false;
             }
+            else
+            {
+                Console.WriteLine($"User: {user.Email}, Profile: {(user.UserProfile != null ? user.UserProfile.FirstName : "null")}, Address: {(user.UserAddress != null ? user.UserAddress.AddressLine_1 : "null")}");
+            }
         }
         catch (Exception ex)
         {
@@ -155,6 +160,7 @@
             loading = false;
         }
     }
+
 
     public async Task UpdateUser()
     {
