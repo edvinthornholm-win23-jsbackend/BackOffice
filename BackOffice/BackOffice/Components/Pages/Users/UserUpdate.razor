@@ -121,12 +121,12 @@
 </div>
 
 @code {
-    private ApplicationUser user;
+    private ApplicationUser? user;
     private bool loading = false;
-    private string Message;
+    private string? Message;
     private bool isSuccess;
     private bool showDeleteConfirmation = false;
-    private string userIdToDelete;
+    private string? userIdToDelete;
 
     private UserInput Input { get; set; } = new UserInput();
 
