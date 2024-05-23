@@ -9,7 +9,7 @@
 
 <h1>Users</h1>
 
-<a href="user/update" class="btn btn-primary mb-5">Update User</a>
+<a href="user/update" class="btn btn-primary mb-5">Update & DeleteUser</a>
 
 @if (users == null)
 {
@@ -23,11 +23,13 @@ else
         <div>
             @* <p>UserName: @user.UserName</p> *@
             <p class="fw-bold">Email: @user.Email</p>
+            <p>Id: @user.Id</p>
 
             @if (user.UserProfile != null)
             {
                 <p>First Name: @user.UserProfile.FirstName</p>
                 <p>Last Name: @user.UserProfile.LastName</p>
+               
             }
             else
             {
