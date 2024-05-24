@@ -3,6 +3,7 @@ using BackOffice.Components;
 using BackOffice.Components.Account;
 using BackOffice.Components.Services;
 using BackOffice.Data;
+using BackOffice.Hubs;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+builder.Services.AddSignalR(); //chat, also single ar package instaled in client
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -69,5 +72,7 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();
