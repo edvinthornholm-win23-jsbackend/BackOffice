@@ -12,53 +12,47 @@
 <a href="user/update" class="btn btn-primary mb-5">Update User</a>
 <a href="user/update" class="btn btn-danger mb-5">DeleteUser</a>
 
-@if (users == null)
+@if (loading)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Loading Users...</em></p>
 }
 else
 {
-
-    @foreach (var user in users)
+    @if (users == null || users.Length == 0)
     {
-        <div>
-            @* <p>UserName: @user.UserName</p> *@
-            <p class="fw-bold">Email: @user.Email</p>
-            <p>Id: @user.Id</p>
+        <p>No users found.</p>
+    }
+    else
+    {
+        @foreach (var user in users)
+        {
+            <div>
+                <p class="fw-bold">Email: @user.Email</p>
+                <p>Id: @user.Id</p>
 
-            @if (user.UserProfile != null)
-            {
-                <p>First Name: @user.UserProfile.FirstName</p>
-                <p>Last Name: @user.UserProfile.LastName</p>
-               
-            }
-            else
-            {
-                <p>No user profile found.</p>
-            }
+                @if (user.UserProfile != null)
+                {
+                    <p>First Name: @user.UserProfile.FirstName</p>
+                    <p>Last Name: @user.UserProfile.LastName</p>
+                }
+                else
+                {
+                    <p>No user profile found.</p>
+                }
 
-            <hr />
-@* 
-            @if (user.UserAddress != null)
-            {
-                <p>Address Line 1: @user.UserAddress.AddressLine_1</p>
-                <p>Address Line 2: @user.UserAddress.AddressLine_2</p>
-                <p>Postal Code: @user.UserAddress.PostalCode</p>
-                <p>City: @user.UserAddress.City</p>
-            }
-            else
-            {
-                <p>No user address found.</p>
-            } *@
-        </div>
+                <hr />
+            </div>
+        }
     }
 }
 
 @code {
     private ApplicationUser[]? users;
+    private bool loading = true;
 
     protected override async Task OnInitializedAsync()
     {
         users = await Http.GetFromJsonAsync<ApplicationUser[]>("https://userprovider-silicon-et.azurewebsites.net/api/GetUser?code=VFnHjGRlz-2iFHvnzGcvGWPWuX43Ojo3UJuB--w3w-opAzFunzCNEw==");
+        loading = false;
     }
 }
