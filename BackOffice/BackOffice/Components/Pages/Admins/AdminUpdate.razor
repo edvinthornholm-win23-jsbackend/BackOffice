@@ -1,17 +1,26 @@
 ﻿@page "/admin/users"
+
 @using Microsoft.AspNetCore.Identity
 @using BackOffice.Data
-@inject UserManager<ApplicationUser> UserManager
-@inject RoleManager<IdentityRole> RoleManager
-@rendermode InteractiveServer
-
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@* @attribute [Authorize(Roles = "Admin")] *@
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "SuperAdmin")]
 
 <PageTitle>Admin - User Management</PageTitle>
 
 <h1>User Management</h1>
+
+    @if (!string.IsNullOrEmpty(Message))
+{
+    <div class="alert @(isSuccess ? "alert-success" : "alert-danger")" role="alert">
+        @Message
+    </div>
+}
 
 @if (loading)
 {
@@ -43,6 +52,20 @@ else
     </table>
 }
 
+<h2>Create New Admin</h2>
+
+<EditForm Model="newUser" OnValidSubmit="CreateNewUser">
+    <div class="form-group">
+        <label>Email</label>
+        <InputText @bind-Value="newUser.Email" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <InputText @bind-Value="newUser.Password" type="password" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success mt-3">Create</button>
+</EditForm>
+
 @if (editUser != null)
 {
     <EditForm Model="editUser" OnValidSubmit="SaveUser">
@@ -69,7 +92,11 @@ else
     public List<UserViewModel> users;
     public List<RoleViewModel> allRoles;
     public EditUserModel editUser;
+    public NewUserModel newUser = new NewUserModel();
     public bool loading = true;
+    private bool isSuccess;
+    private string Message;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,11 +126,17 @@ else
         var roles = await RoleManager.Roles.ToListAsync();
         allRoles = roles.Select(r => new RoleViewModel { Name = r.Name }).ToList();
 
+        if (!allRoles.Any(r => r.Name == "SuperAdmin"))
+        {
+            allRoles.Add(new RoleViewModel { Name = "SuperAdmin" });
+        }
+
         if (!allRoles.Any(r => r.Name == "Admin"))
         {
             allRoles.Add(new RoleViewModel { Name = "Admin" });
         }
     }
+
 
     public async Task EnsureRoleExists(string roleName)
     {
@@ -113,12 +146,62 @@ else
             var roleResult = await RoleManager.CreateAsync(new IdentityRole(roleName));
             if (!roleResult.Succeeded)
             {
-                throw new Exception($"Error creating role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                Message = $"Error creating role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}";
+                isSuccess = false;
+                return;
             }
         }
     }
 
+    public async Task CreateUserWithRoleAdmin(string email, string password)
+    {
+        var user = new ApplicationUser { UserName = email, Email = email };
+        var result = await UserManager.CreateAsync(user, password);
+        if (result.Succeeded)
+        {
+            await EnsureRoleExists("Admin");
+            await UserManager.AddToRoleAsync(user, "Admin");
+        }
+        else
+        {
+            Message = $"Error creating adminuser: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            isSuccess = false;
+        }
+    }
 
+    public async Task CreateUserWithRoleSuperAdmin(string email, string password)
+    {
+        var user = new ApplicationUser { UserName = email, Email = email };
+        var result = await UserManager.CreateAsync(user, password);
+        if (result.Succeeded)
+        {
+            await EnsureRoleExists("SuperAdmin");
+            await UserManager.AddToRoleAsync(user, "SuperAdmin");
+            Message = "User created successfully.";
+            isSuccess = true;
+        }
+        else
+        {
+            Message = $"Error creating superadminuser: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            isSuccess = false;
+        }
+    }
+
+
+    public async Task CreateNewUser()
+    {
+        try
+        {
+            await CreateUserWithRoleSuperAdmin(newUser.Email, newUser.Password);
+            newUser = new NewUserModel();
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            Message = $"Error creating user: {ex.Message}";
+            isSuccess = false;
+        }
+    }
 
     public async Task ShowEditUser(string userId)
     {
@@ -140,7 +223,6 @@ else
                     IsSelected = userRoles.Contains(r.Name)
                 }).ToList()
             };
-        Console.WriteLine($"Loaded user: {editUser.Email} with roles: {string.Join(", ", userRoles)}");
         StateHasChanged();
     }
 
@@ -162,11 +244,6 @@ else
 
             var rolesToAdd = selectedRoles.Except(currentRoles).ToList();
             var rolesToRemove = currentRoles.Except(selectedRoles).ToList();
-
-            Console.WriteLine($"Current roles: {string.Join(", ", currentRoles)}");
-            Console.WriteLine($"Selected roles: {string.Join(", ", selectedRoles)}");
-            Console.WriteLine($"Roles to add: {string.Join(", ", rolesToAdd)}");
-            Console.WriteLine($"Roles to remove: {string.Join(", ", rolesToRemove)}");
 
             foreach (var role in rolesToAdd)
             {
@@ -200,7 +277,6 @@ else
         }
     }
 
-
     public void CancelEdit()
     {
         editUser = null;
@@ -231,5 +307,11 @@ else
         public string Id { get; set; }
         public string Email { get; set; }
         public List<RoleViewModel> Roles { get; set; }
+    }
+
+    public class NewUserModel
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }
