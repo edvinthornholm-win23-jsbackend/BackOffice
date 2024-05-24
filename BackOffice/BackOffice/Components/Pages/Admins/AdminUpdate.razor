@@ -54,22 +54,22 @@ else
             <label>Roles</label>
             @foreach (var role in editUser.Roles)
             {
-                <div class="form-check">
+                <div class="form-check mb-5">
                     <InputCheckbox @bind-Value="role.IsSelected" class="form-check-input" />
                     <label class="form-check-label">@role.Name</label>
                 </div>
             }
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
+        <button type="submit" class="btn btn-success mb-3">Save</button>
         <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
     </EditForm>
 }
 
 @code {
-    private List<UserViewModel> users;
-    private List<RoleViewModel> allRoles;
-    private EditUserModel editUser;
-    private bool loading = true;
+    public List<UserViewModel> users;
+    public List<RoleViewModel> allRoles;
+    public EditUserModel editUser;
+    public bool loading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,7 +78,7 @@ else
         loading = false;
     }
 
-    private async Task LoadUsers()
+    public async Task LoadUsers()
     {
         var userList = await UserManager.Users.ToListAsync();
         users = new List<UserViewModel>();
@@ -94,13 +94,33 @@ else
         }
     }
 
-    private async Task LoadRoles()
+    public async Task LoadRoles()
     {
         var roles = await RoleManager.Roles.ToListAsync();
         allRoles = roles.Select(r => new RoleViewModel { Name = r.Name }).ToList();
+
+        if (!allRoles.Any(r => r.Name == "Admin"))
+        {
+            allRoles.Add(new RoleViewModel { Name = "Admin" });
+        }
     }
 
-    private async Task ShowEditUser(string userId)
+    public async Task EnsureRoleExists(string roleName)
+    {
+        var roleExists = await RoleManager.RoleExistsAsync(roleName);
+        if (!roleExists)
+        {
+            var roleResult = await RoleManager.CreateAsync(new IdentityRole(roleName));
+            if (!roleResult.Succeeded)
+            {
+                throw new Exception($"Error creating role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+    }
+
+
+
+    public async Task ShowEditUser(string userId)
     {
         Console.WriteLine($"Editing user with ID: {userId}");
         var user = await UserManager.FindByIdAsync(userId);
@@ -124,9 +144,15 @@ else
         StateHasChanged();
     }
 
-    private async Task SaveUser()
+    public async Task SaveUser()
     {
         var user = await UserManager.FindByIdAsync(editUser.Id);
+        if (user == null)
+        {
+            Console.WriteLine($"User with ID {editUser.Id} not found.");
+            return;
+        }
+
         user.Email = editUser.Email;
         var result = await UserManager.UpdateAsync(user);
         if (result.Succeeded)
@@ -137,47 +163,70 @@ else
             var rolesToAdd = selectedRoles.Except(currentRoles).ToList();
             var rolesToRemove = currentRoles.Except(selectedRoles).ToList();
 
+            Console.WriteLine($"Current roles: {string.Join(", ", currentRoles)}");
+            Console.WriteLine($"Selected roles: {string.Join(", ", selectedRoles)}");
+            Console.WriteLine($"Roles to add: {string.Join(", ", rolesToAdd)}");
+            Console.WriteLine($"Roles to remove: {string.Join(", ", rolesToRemove)}");
+
+            foreach (var role in rolesToAdd)
+            {
+                await EnsureRoleExists(role);
+            }
+
             if (rolesToAdd.Any())
             {
-                await UserManager.AddToRolesAsync(user, rolesToAdd);
+                var addResult = await UserManager.AddToRolesAsync(user, rolesToAdd);
+                if (!addResult.Succeeded)
+                {
+                    Console.WriteLine($"Error adding roles: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
+                }
             }
 
             if (rolesToRemove.Any())
             {
-                await UserManager.RemoveFromRolesAsync(user, rolesToRemove);
+                var removeResult = await UserManager.RemoveFromRolesAsync(user, rolesToRemove);
+                if (!removeResult.Succeeded)
+                {
+                    Console.WriteLine($"Error removing roles: {string.Join(", ", removeResult.Errors.Select(e => e.Description))}");
+                }
             }
 
             await LoadUsers();
             editUser = null;
         }
+        else
+        {
+            Console.WriteLine($"Error updating user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
     }
 
-    private void CancelEdit()
+
+    public void CancelEdit()
     {
         editUser = null;
     }
 
-    private async Task DeleteUser(string userId)
+    public async Task DeleteUser(string userId)
     {
         var user = await UserManager.FindByIdAsync(userId);
         await UserManager.DeleteAsync(user);
         await LoadUsers();
     }
 
-    private class UserViewModel
+    public class UserViewModel
     {
         public string Id { get; set; }
         public string Email { get; set; }
         public IList<string> Roles { get; set; }
     }
 
-    private class RoleViewModel
+    public class RoleViewModel
     {
         public string Name { get; set; }
         public bool IsSelected { get; set; }
     }
 
-    private class EditUserModel
+    public class EditUserModel
     {
         public string Id { get; set; }
         public string Email { get; set; }
