@@ -1,9 +1,11 @@
 ﻿@page "/chat"
 @rendermode InteractiveAuto
 
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
 
 <PageTitle>Chat</PageTitle>
 
